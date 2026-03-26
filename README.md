@@ -2,9 +2,9 @@
 
 # 📊 Elastic IOPS Monitor
 
-**Real-time IOPS and MB/s monitoring for Elasticsearch hot-tier nodes**
+**IOPS and MB/s monitoring for Elasticsearch nodes**
 
-**Monitoramento em tempo real de IOPS e MB/s para nós hot do Elasticsearch**
+[🇧🇷 Português](#-português) · [🇺🇸 English](#-english)
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue?logo=python&logoColor=white)](https://python.org)
 [![Elasticsearch](https://img.shields.io/badge/Elasticsearch-7.x%20%7C%208.x%20%7C%209.x-005571?logo=elasticsearch&logoColor=white)](https://elastic.co)
@@ -17,15 +17,11 @@
 
 ---
 
-> **🇧🇷 Português** · [🇺🇸 English](#-english)
-
----
-
 ## 🇧🇷 Português
 
 ### ✨ O que é
 
-Script Python leve que monitora **IOPS** (operações de I/O por segundo) e **throughput em MB/s** dos nós *hot tier* de um cluster Elasticsearch — em tempo real no terminal ou como relatório HTML interativo gerado a partir de uma coleta por tempo determinado.
+Script Python leve que monitora **IOPS** (operações de I/O por segundo) e **throughput em MB/s** dos nós de um cluster Elasticsearch — com tabela atualizada periodicamente no terminal ou como relatório HTML interativo gerado a partir de uma coleta por tempo determinado.
 
 Não requer Stack Monitoring habilitado, agentes externos ou bibliotecas pesadas — apenas `requests`.
 
@@ -99,7 +95,7 @@ Pressione **Ctrl+C** a qualquer momento para interromper e gerar o relatório co
 | `ES_PASSWORD` | — | Senha *(alternativa à API Key)* |
 | `SAMPLE_INTERVAL` | `10` | Segundos entre as duas coletas para calcular o delta |
 | `REFRESH_INTERVAL` | `30` | Segundos entre ciclos no modo monitor (`0` = executa uma vez) |
-| `HOT_ROLES` | `data_hot` | Roles que identificam nós hot (separados por vírgula) |
+| `ROLES` | `data_hot` | Roles dos nós a monitorar (separados por vírgula) |
 | `REPORT_DURATION` | `10m` | Duração padrão do relatório quando omitido no comando |
 
 ---
@@ -136,7 +132,6 @@ O relatório gerado (`iops_report_YYYYMMDD_HHMMSS.html`) contém:
 
 ### 🔒 Segurança
 
-- O arquivo `.env` está no `.gitignore` — **nunca será comitado**
 - Somente `.env.example` (com placeholders) é versionado
 - A API Key precisa apenas de permissão de leitura: `cluster:monitor/nodes/stats`
 
@@ -154,7 +149,7 @@ Apenas biblioteca padrão do Python para todo o resto (`os`, `sys`, `signal`, `j
 
 ### 🤝 Contribuindo
 
-Pull requests são bem-vindos. Para mudanças grandes, abra uma issue primeiro para discutir o que você gostaria de mudar.
+Contribuições são bem-vindas! Sinta-se à vontade para abrir uma _issue_ para reportar bugs ou sugerir melhorias. Para mudanças significativas, abra uma _issue_ primeiro para alinhar a abordagem antes de enviar um Pull Request.
 
 ---
 
@@ -164,7 +159,7 @@ Pull requests são bem-vindos. Para mudanças grandes, abra uma issue primeiro p
 
 ### ✨ What it is
 
-A lightweight Python script that monitors **IOPS** (I/O operations per second) and **throughput in MB/s** for Elasticsearch *hot-tier* nodes — either as a live terminal table or as an interactive HTML report generated from a timed collection run.
+A lightweight Python script that monitors **IOPS** (I/O operations per second) and **throughput in MB/s** for Elasticsearch nodes — either as a periodically refreshed terminal table or as an interactive HTML report generated from a timed collection run.
 
 No Stack Monitoring required, no external agents, no heavy dependencies — just `requests`.
 
@@ -222,7 +217,7 @@ Press **Ctrl+C** at any time to stop and generate the report with data collected
 
 | Mode | Command | Description |
 |------|---------|-------------|
-| 🔄 Monitor | `python monitor_iops.py` | Live table refreshed in a loop |
+| 🔄 Monitor | `python monitor_iops.py` | Table refreshed periodically in a loop |
 | 📈 Report | `python monitor_iops.py --report 10m` | HTML file with Chart.js graphs |
 | 🔧 Custom .env | `python monitor_iops.py /path/.env` | Point to an alternative config file |
 
@@ -238,7 +233,7 @@ Press **Ctrl+C** at any time to stop and generate the report with data collected
 | `ES_PASSWORD` | — | Password *(alternative to API Key)* |
 | `SAMPLE_INTERVAL` | `10` | Seconds between the two snapshots used to compute the delta |
 | `REFRESH_INTERVAL` | `30` | Seconds between cycles in monitor mode (`0` = run once) |
-| `HOT_ROLES` | `data_hot` | Comma-separated roles that identify hot nodes |
+| `ROLES` | `data_hot` | Comma-separated node roles to monitor |
 | `REPORT_DURATION` | `10m` | Default report duration when omitted from the command |
 
 ---
@@ -275,7 +270,6 @@ The generated report (`iops_report_YYYYMMDD_HHMMSS.html`) includes:
 
 ### 🔒 Security
 
-- The `.env` file is in `.gitignore` — **it will never be committed**
 - Only `.env.example` (with placeholders) is versioned
 - The API Key only needs read permission: `cluster:monitor/nodes/stats`
 
@@ -293,7 +287,7 @@ Standard Python library only for everything else (`os`, `sys`, `signal`, `json`,
 
 ### 🤝 Contributing
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Contributions are welcome! Feel free to open an issue to report bugs or suggest improvements. For significant changes, please open an issue first to discuss your approach before submitting a Pull Request.
 
 ---
 

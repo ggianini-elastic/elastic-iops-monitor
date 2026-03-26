@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-monitor_iops.py — Monitor e relatório de IOPS/MB/s para nós hot do Elasticsearch.
+monitor_iops.py — Monitor e relatório de IOPS/MB/s para nós do Elasticsearch.
 
 Modos:
     python monitor_iops.py                   # monitor contínuo (lê .env)
@@ -125,8 +125,8 @@ def fetch_fs_stats(session: requests.Session, host: str) -> dict:
     return result
 
 
-def filter_hot_nodes(stats: dict, hot_roles: list) -> dict:
-    role_set = set(hot_roles)
+def filter_nodes(stats: dict, roles: list) -> dict:
+    role_set = set(roles)
     return {nid: n for nid, n in stats.items() if role_set & set(n["roles"])}
 
 
@@ -197,7 +197,7 @@ def print_table(rows, cfg, interval):
 
 # ─── Modo RELATÓRIO ───────────────────────────────────────────────────────────
 
-def collect_report_data(session, cfg, hot_roles, sample_interval, duration_secs):
+def collect_report_data(session, cfg, roles, sample_interval, duration_secs):
     """
     Coleta amostras de IOPS/MB/s durante `duration_secs` segundos.
     Retorna lista de pontos: [{ts, nodes: [{name, r_iops, w_iops, ...}]}]
@@ -217,7 +217,7 @@ def collect_report_data(session, cfg, hot_roles, sample_interval, duration_secs)
     while time.time() < end_at:
         try:
             raw  = fetch_fs_stats(session, host)
-            snap = filter_hot_nodes(raw, hot_roles)
+            snap = filter_nodes(raw, roles)
         except RuntimeError as e:
             print(RED(f"  [{datetime.now().strftime('%H:%M:%S')}] Erro: {e}"))
             time.sleep(sample_interval)
@@ -246,7 +246,7 @@ def collect_report_data(session, cfg, hot_roles, sample_interval, duration_secs)
     return points
 
 
-def generate_html_report(points, cfg, hot_roles, sample_interval, duration_secs):
+def generate_html_report(points, cfg, roles, sample_interval, duration_secs):
     """Gera arquivo HTML com gráficos Chart.js de IOPS e MB/s ao longo do tempo."""
     if not points:
         print(RED("  Nenhum dado coletado — relatório não gerado."))
@@ -412,7 +412,7 @@ def generate_html_report(points, cfg, hot_roles, sample_interval, duration_secs)
   <span>📅 {now_str}</span>
   <span>⏱ Duração: {duration_secs/60:.1f} min</span>
   <span>📊 {len(points)} amostras a cada {sample_interval:.0f}s</span>
-  <span>🔥 Roles: <span class="badge">{', '.join(hot_roles)}</span></span>
+  <span>🔥 Roles: <span class="badge">{', '.join(roles)}</span></span>
   <span>💾 Nós: {', '.join(f'<span class="badge">{n}</span>' for n in node_names)}</span>
 </div>
 
@@ -506,13 +506,13 @@ mkChart("chartWmbs",  {w_mbs_datasets},  "MB/s");
 
 # ─── Loop do monitor contínuo ─────────────────────────────────────────────────
 
-def run_once(session, cfg, hot_roles, interval):
+def run_once(session, cfg, roles, interval):
     host = cfg["ES_HOST"]
     print(DIM(f"  [{datetime.now().strftime('%H:%M:%S')}] Coletando snapshot 1..."), end="\r")
-    snap1 = filter_hot_nodes(fetch_fs_stats(session, host), hot_roles)
+    snap1 = filter_nodes(fetch_fs_stats(session, host), roles)
 
     if not snap1:
-        print(YELLOW(f"\n  Nenhum nó com roles {hot_roles} encontrado."))
+        print(YELLOW(f"\n  Nenhum nó com roles {roles} encontrado."))
         for nid, n in fetch_fs_stats(session, host).items():
             print(f"    {n['name']}: {n['roles']}")
         return
@@ -521,7 +521,7 @@ def run_once(session, cfg, hot_roles, interval):
     time.sleep(interval)
 
     print(DIM(f"  [{datetime.now().strftime('%H:%M:%S')}] Coletando snapshot 2..."), end="\r")
-    snap2 = filter_hot_nodes(fetch_fs_stats(session, host), hot_roles)
+    snap2 = filter_nodes(fetch_fs_stats(session, host), roles)
     print_table(compute_delta(snap1, snap2, interval), cfg, interval)
 
 
@@ -560,13 +560,13 @@ def main():
 
     sample_interval  = float(cfg.get("SAMPLE_INTERVAL",  "10"))
     refresh_interval = float(cfg.get("REFRESH_INTERVAL", "30"))
-    hot_roles        = [r.strip() for r in cfg.get("HOT_ROLES", "data_hot").split(",") if r.strip()]
+    roles            = [r.strip() for r in cfg.get("ROLES", "data_hot").split(",") if r.strip()]
     session          = build_session(cfg)
 
     print()
     print(BOLD(CYAN("  Elastic IOPS Monitor")))
     print(DIM(f"  Host     : {cfg['ES_HOST']}"))
-    print(DIM(f"  Hot roles: {', '.join(hot_roles)}"))
+    print(DIM(f"  Roles    : {', '.join(roles)}"))
 
     # ── Modo RELATÓRIO ──────────────────────────────────────────────────────
     if report_mode:
@@ -584,7 +584,7 @@ def main():
 
         def _finish(*_):
             print(f"\n{YELLOW('  Interrompido — gerando relatório com dados coletados...')}")
-            path = generate_html_report(points, cfg, hot_roles, sample_interval, dur_secs)
+            path = generate_html_report(points, cfg, roles, sample_interval, dur_secs)
             if path:
                 print(GREEN(f"\n  Relatório: {path}"))
                 webbrowser.open(f"file:///{path.replace(os.sep, '/')}")
@@ -595,11 +595,11 @@ def main():
             signal.signal(signal.SIGTERM, _finish)
 
         try:
-            points = collect_report_data(session, cfg, hot_roles, sample_interval, dur_secs)
+            points = collect_report_data(session, cfg, roles, sample_interval, dur_secs)
         except RuntimeError as e:
             print(RED(f"  Erro na coleta: {e}"))
 
-        path = generate_html_report(points, cfg, hot_roles, sample_interval, dur_secs)
+        path = generate_html_report(points, cfg, roles, sample_interval, dur_secs)
         if path:
             print(GREEN(f"\n  Relatório gerado: {path}"))
             print(DIM("  Abrindo no browser..."))
@@ -622,7 +622,7 @@ def main():
 
         while True:
             try:
-                run_once(session, cfg, hot_roles, sample_interval)
+                run_once(session, cfg, roles, sample_interval)
             except RuntimeError as e:
                 print(RED(f"\n  Erro: {e}"))
 
