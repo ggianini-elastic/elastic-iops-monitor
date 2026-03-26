@@ -137,6 +137,31 @@ O relatório gerado (`iops_report_YYYYMMDD_HHMMSS.html`) contém:
 
 ---
 
+### 🔌 APIs do Elasticsearch utilizadas
+
+O script faz chamadas exclusivamente a esta API:
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `GET` | `/_nodes/stats/fs` | Estatísticas de I/O por nó (contadores cumulativos de operações e KB lidos/escritos) |
+
+**Campos lidos da resposta:**
+
+```
+nodes.<id>.name                          → nome do nó
+nodes.<id>.roles                         → roles (para filtrar pelos roles configurados)
+nodes.<id>.fs.io_stats.total.read_operations
+nodes.<id>.fs.io_stats.total.write_operations
+nodes.<id>.fs.io_stats.total.read_kilobytes
+nodes.<id>.fs.io_stats.total.write_kilobytes
+```
+
+O IOPS e MB/s são calculados como delta entre dois snapshots consecutivos dividido pelo intervalo de amostragem.
+
+**Permissão mínima necessária:** `cluster:monitor/nodes/stats`
+
+---
+
 ### 🛠️ Dependências
 
 | Pacote | Versão | Uso |
@@ -272,6 +297,31 @@ The generated report (`iops_report_YYYYMMDD_HHMMSS.html`) includes:
 
 - Only `.env.example` (with placeholders) is versioned
 - The API Key only needs read permission: `cluster:monitor/nodes/stats`
+
+---
+
+### 🔌 Elasticsearch APIs used
+
+The script calls only one API:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/_nodes/stats/fs` | Per-node I/O statistics (cumulative counters for read/write operations and kilobytes) |
+
+**Fields read from the response:**
+
+```
+nodes.<id>.name                          → node name
+nodes.<id>.roles                         → roles (used to filter by configured roles)
+nodes.<id>.fs.io_stats.total.read_operations
+nodes.<id>.fs.io_stats.total.write_operations
+nodes.<id>.fs.io_stats.total.read_kilobytes
+nodes.<id>.fs.io_stats.total.write_kilobytes
+```
+
+IOPS and MB/s are computed as the delta between two consecutive snapshots divided by the sampling interval.
+
+**Minimum permission required:** `cluster:monitor/nodes/stats`
 
 ---
 
